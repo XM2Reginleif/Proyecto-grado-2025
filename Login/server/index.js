@@ -12,6 +12,10 @@ import {credentials} from "./middlewares/credentials.js";
 import {errorHandler} from "./middlewares/error_handler.js";
 import authRouter from "./routes/api/auth.js";
 import bodyParser from "body-parser";
+import cursoRouter from "./routes/api/cursoRoutes.js";
+import { authentication } from "./middlewares/authentication.js";
+
+
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +23,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
+app.use(authentication); 
 app.use(cors(corsOptions));
 app.use(credentials);
 app.use(express.json());
@@ -29,7 +34,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use("/api/auth", authRouter);
-
+app.use("/api/curso", cursoRouter); //Ruta para la evaluacion desde la bd
+console.log('Ruta /api/curso registrada')
 
 
 app.all("*", (req, res) => {

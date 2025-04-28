@@ -1,295 +1,276 @@
 <template>
-    <div>
-      <div v-if="showPrincipal" class="algoritmos">
-        <div class="image-container">
-          <div class="image-item" v-for="(image, index) in puzzle" :key="image.id">
-            <p>{{ index + 1 }}</p>
-            <img :src="image.src" />
-          </div>
-        </div>
-        <br>
-        <p class="texto-personalizado"> <strong>Instrucciones:</strong> {{ instruccion }} </p>
-        <br>
-        <div class="input-container">
-          <div class="input-item" v-for="(input, index) in inputs" :key="input.key">
-            <p>{{ index + 1 }}</p>
-            <input
-              type="number"
-              v-model.number="input.value"
-              :ref="input.name"
-              min="1"
-              :max="numSteps"
-              size="1"
-              required
-            />
-          </div>
-        </div>
-        <br>
-        <div class="button-container">
-          <button 
-            @click="validateInputs" 
-            :disabled="isButtonDisabled">
-            Enviar
-          </button>
-        </div>
-        <br>
-        <p v-if="attemps > 0 " class="contador">
-          intentos restantes: {{ maxAttemps - attemps }}
-        </p>
-        <div class="message" v-if="showErrorMessage">
-          <p>Verifica los datos!</p>
-        </div>
+  <div>
+    <!-- Mostrar intentos disponibles -->
+    <p v-if="intentosDisponiblesAlgorithm !== null" class="alert alert-info">
+      Intentos restantes: {{ intentosDisponiblesAlgorithm }}
+    </p>
+
+    <!-- Imagenes para ordenar -->
+    <div class="image-container">
+      <div class="image-item" v-for="(image, index) in puzzle" :key="image.id">
+        <p>{{ index + 1 }}</p>
+        <img :src="image.src" />
       </div>
-      <div v-if="showResult" class="validate-container">
-        <div v-if="showResult">
-          <p class="validate-msg" v-if="isCorrect">¡Correcto!</p>
-          <p class="validate-msg" v-else>Lo sentimos, es incorrecto.</p>
-        </div>
-        <div class="button-container">
-          <button 
-            class="bt-validate" 
-            v-if="isCorrect || attemps === maxAttemps" 
-            :disabled="!isFinishEnabled" 
-            @click="finish">
-            Finalizar
-          </button>
-          <button 
-            class="bt-validate" 
-            v-if="!isCorrect" 
-            :disabled="isRetryDisabled" 
-            @click="showModule">
-            Volver a intentar
-          </button>
-        </div>
+    </div>
+
+    <!-- Instrucciones -->
+    <p class="texto-personalizado">
+      <strong>Instrucciones:</strong> {{ instruccion }}
+    </p>
+
+    <!-- Inputs -->
+    <div class="input-container">
+      <div class="input-item" v-for="(input, index) in inputs" :key="input.key">
+        <p>{{ index + 1 }}</p>
+        <input
+          type="number"
+          v-model.number="input.value"
+          :ref="input.name"
+          min="1"
+          :max="numSteps"
+          required
+        />
       </div>
-      <p v-if="isCorrect || attemps === maxAttemps" class="correcto alert alert-success mt-3">
-        Tu evaluación final es: {{ evaluacion }}
-      </p>
-      <br>
-      <p class="alert alert-primary">
-        Evaluación Algoritmo: {{ evaluacionAlgorithmStore.evaluacion.toFixed(1) }}
+    </div>
+
+    <!-- Boton para enviar -->
+    <div class="button-container mt-3">
+      <button
+        @click="validateInputs"
+        :disabled="isButtonDisabled || intentosDisponiblesAlgorithm <= 0"
+        class="btn btn-primary"
+      >
+        Enviar respuesta
+      </button>
+    </div>
+
+    <!-- Mensaje de error si las entradas no son válidas -->
+    <div class="message mt-2" v-if="showErrorMessage">
+      <p class="alert alert-warning">¡Verifica los datos ingresados!</p>
+    </div>
+
+    <!-- Retroalimentación -->
+    <div v-if="feedbackMessage" class="mt-3">
+      <p :class="feedbackClass">{{ feedbackMessage }}</p>
+    </div>
+
+    <!-- Nota obtenida -->
+    <div v-if="evaluacion !== null" class="correcto mt-3">
+      <p
+        class="alert"
+        :class="{
+          'alert-danger': evaluacion === 1,
+          'alert-success': evaluacion >= 3
+        }"
+      >
+        Tu evaluación (algoritmo): {{ evaluacion }}
       </p>
     </div>
-    </template>
-    
-    <script>
-    import router from '@/router'
-    import image1 from '@/assets/ConectarCablesImages/Conectar 1.png'
-    import image2 from '@/assets/ConectarCablesImages/Conectar 2.png'
-    import image3 from '@/assets/ConectarCablesImages/Conectar 3.png'
-    import image4 from '@/assets/ConectarCablesImages/Conectar 4.png'
-    import image5 from '@/assets/ConectarCablesImages/Conectar 5.png'
-    import image6 from '@/assets/ConectarCablesImages/Conectar 6.png'
-    import image7 from '@/assets/ConectarCablesImages/Conectar 7.png'
-    import image8 from '@/assets/ConectarCablesImages/Conectar 8.png'
-    import image9 from '@/assets/ConectarCablesImages/Conectar 9.png'
-    import { useEvaluacionAlgorithmStore } from '@/stores/evaluation';
+
+    <!-- Nota global del store -->
+    <p class="alert alert-primary mt-3">
+      Evaluación Algoritmo (global): {{ evaluacionAlgorithmStore.evaluacion.toFixed(1) }}
+    </p>
+
+    <!-- Botón avanzar (solo si completó o ya no hay intentos) -->
+    <button
+      class="bt-validate mt-3"
+      @click="finish"
+      :disabled="evaluacion === null || (intentosDisponiblesAlgorithm > 0 && !isCorrect)"
+    >
+      Avanzar
+    </button>
+  </div>
+</template>
 
 
 
-    export default {
-      name: 'ImageOrderingModule',
+<script>
+import router from '@/router';
+import image1 from '@/assets/ConectarCablesImages/Conectar 1.png';
+import image2 from '@/assets/ConectarCablesImages/Conectar 2.png';
+import image3 from '@/assets/ConectarCablesImages/Conectar 3.png';
+import image4 from '@/assets/ConectarCablesImages/Conectar 4.png';
+import image5 from '@/assets/ConectarCablesImages/Conectar 5.png';
+import image6 from '@/assets/ConectarCablesImages/Conectar 6.png';
+import image7 from '@/assets/ConectarCablesImages/Conectar 7.png';
+import image8 from '@/assets/ConectarCablesImages/Conectar 8.png';
+import image9 from '@/assets/ConectarCablesImages/Conectar 9.png';
+import { onMounted, reactive, toRefs } from 'vue';
+import { useEvaluacionAlgorithmStore } from '@/stores/evaluation';
+import { useEvaluacionSubejercicio } from '@/composables/useEvaluacionSubejercicio';
 
-      setup() {
-        const evaluacionAlgorithmStore = useEvaluacionAlgorithmStore();
-        
-        return {
-          evaluacionAlgorithmStore, // devuelve todo el store, no solo el valor
-        };
-      },
+export default {
+  name: 'ImageOrderingModule',
 
-      data() {
-        return {
-          /*enunciado:
-            'Hacer un programa que calcule el área de un rectángulo que tiene dos lados de 12cm y otros dos lados de 6cm.',*/
-          instruccion: 'Ingrese el orden correcto del algoritmo',
-          puzzle: [],
-          attemps : 0,
-          maxAttemps : 3,
-          evaluacion : null,
-          correct: [
-            {
-              id: 1,
-              src: image1
-            },
-            {
-              id: 2,
-              src: image2
-            },
-            {
-              id: 3,
-              src: image3
-            },
-            {
-              id: 4,
-              src: image4
-            },
-            {
-              id: 5,
-              src: image5
-            },
-            {
-              id: 6,
-              src: image6
-            },
-            {
-              id: 7,
-              src: image7
-            },
-            {
-              id: 8,
-              src: image8
-            },
+  setup() {
+    const evaluacionAlgorithmStore = useEvaluacionAlgorithmStore();
 
-          ],
-          bad: [
-            {
-              id: 9,
-              src: image9
-            },
-          ],
-          showErrorMessage: false,
-          showResult: false,
-          isCorrect: false,
-          showPrincipal: true,
-          inputs: Array(8)
-            .fill()
-            .map((_, index) => ({
-              key: index,
-              value: null,
-              name: `input-${index + 1}`
-            })),
-          numSteps: 8
-        }
-      },
-      created() {
-        this.puzzle = this.puzzle.concat(this.getImages(this.correct, 1), this.correct)
-        this.shuffleImages()
-      },
+    const evaluacionAlgorithmRaw = reactive(
+      useEvaluacionSubejercicio({
+        modulo: '1. Fase de ensamblaje',
+        submodulo: '1.1 Conectar cables a los motorreductores',
+        ejercicio: 'Ejercicio 1',
+        categoria: 'algoritmo',
+        subejercicio: 'Subejercicio 1'
+      })
+    );
 
+    const evaluacionAlgorithm = {
+      ...toRefs(evaluacionAlgorithmRaw),
+      registrarEvaluacion: evaluacionAlgorithmRaw.registrarEvaluacion,
+      obtenerIntentos: evaluacionAlgorithmRaw.obtenerIntentos
+    };
 
-      computed: {
-        isButtonDisabled() {
-          // Verifica si todas las entradas tienen valores válidos (entre 1 y numSteps)
-          return !this.inputs.every(
-            (input) =>
-              Number.isInteger(input.value) &&
-              input.value >= 1 &&
-              input.value <= 13
-          );
-        },
+    onMounted(() => {
+      evaluacionAlgorithm.obtenerIntentos();
+    });
 
-        isRetryDisabled() {
-          // El botón se desactiva si la respuesta es correcta o los intentos disponibles se agotaron
-          return this.isCorrect || this.attemps >= this.maxAttemps;
-        },
+    return {
+      evaluacionAlgorithmStore,
+      intentosDisponiblesAlgorithm: evaluacionAlgorithm.intentosRestantes,
+      obtenerIntentosAlgorithm: evaluacionAlgorithm.obtenerIntentos,
+      registrarEvaluacionAlgorithm: evaluacionAlgorithm.registrarEvaluacion,
+      notaActualAlgorithm: evaluacionAlgorithm.notaActual
+    };
+  },
 
-        isFinishEnabled() {
-          // El botón de finalizar está disponible si la respuesta es correcta o se acaban los intentos
-          return this.isCorrect || this.attemps >= this.maxAttemps;
-        },
-      },
+  data() {
+    return {
+      instruccion: 'Ingrese el orden correcto del algoritmo',
+      puzzle: [],
+      evaluacion: null,
+      correct: [
+        { id: 1, src: image1 },
+        { id: 2, src: image2 },
+        { id: 3, src: image3 },
+        { id: 4, src: image4 },
+        { id: 5, src: image5 },
+        { id: 6, src: image6 },
+        { id: 7, src: image7 },
+        { id: 8, src: image8 }
+      ],
+      bad: [{ id: 9, src: image9 }],
+      inputs: Array(8).fill().map((_, index) => ({
+        key: index,
+        value: null,
+        name: `input-${index + 1}`
+      })),
+      numSteps: 8,
+      feedbackMessage: '',
+      feedbackClass: '',
+      isCorrect: false,
+      showPrincipal: true,
+      showResult: false,
+      showErrorMessage: false
+    };
+  },
 
+  created() {
+    this.puzzle = this.puzzle.concat(this.getImages(this.correct, 1), this.correct);
+    this.shuffleImages();
+  },
 
-      methods: {
-        hideModule() {
-          this.showModule = false
-        },
-        showModule() {
-          this.showPrincipal = true
-          this.showResult = false
-          this.shuffleImages()
-          this.inputs = Array(8)
-            .fill()
-            .map((_, index) => ({
-              key: index,
-              value: null,
-              name: `input-${index + 1}`
-            }))
-        },
+  computed: {
+    isButtonDisabled() {
+      return !this.inputs.every(
+        (input) =>
+          Number.isInteger(input.value) &&
+          input.value >= 1 &&
+          input.value <= 9
+      );
+    },
+    isFinishEnabled() {
+      return this.isCorrect || this.intentosDisponiblesAlgorithm <= 0;
+    }
+  },
 
-        finish() {
-        
-        if(this.isFinishEnabled){
+  methods: {
+    shuffleImages() {
+      for (let i = this.puzzle.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.puzzle[i], this.puzzle[j]] = [this.puzzle[j], this.puzzle[i]];
+      }
+    },
+
+    getImages(images, n) {
+      const allImages = this.getUniqueImages([...images, ...this.bad]);
+      return allImages.slice(allImages.length - n);
+    },
+
+    getUniqueImages(images) {
+      return images.filter((image, index) => {
+        return images.indexOf(images.find((i) => i.id === image.id)) === index;
+      });
+    },
+
+    async validateInputs() {
+  if (this.isButtonDisabled || this.intentosDisponiblesAlgorithm <= 0) {
+    return;
+  }
+
+  this.showErrorMessage = false;
+  this.showResult = false;
+  this.isCorrect = false;
+
+  // Validar entradas
+  const entradasValidas = this.inputs.every((input) => {
+    const inputValue = Number.parseInt(input.value, 10);
+    return !Number.isNaN(inputValue) && inputValue >= 1 && inputValue <= this.puzzle.length;
+  });
+
+  if (!entradasValidas) {
+    this.showErrorMessage = true;
+    return;
+  }
+
+  // Verificar si es correcta la respuesta
+  this.isCorrect = this.inputs.every((input, index) => {
+    const inputValue = Number.parseInt(input.value, 10);
+    return this.puzzle[inputValue - 1].id === this.correct[index].id;
+  });
+
+  // Calcular evaluación SOLO si es correcta o si se acabaron los intentos
+  const intentosAntesDeRegistrar = this.intentosDisponiblesAlgorithm;
+
+  if (this.isCorrect) {
+    this.evaluacion = intentosAntesDeRegistrar === 3 ? 5 :
+                      intentosAntesDeRegistrar === 2 ? 4 : 3;
+  } else if (this.intentosDisponiblesAlgorithm <= 1) { 
+    // Si es el último intento y falló, poner la nota mínima
+    this.evaluacion = 1;
+  } else {
+    // Si no es el último intento y falló, no se guarda nota aún
+    this.evaluacion = 1;
+  }
+
+  try {
+    await this.registrarEvaluacionAlgorithm(this.evaluacion);
+    await this.obtenerIntentosAlgorithm(); // Esto refresca los intentos visibles siempre
+    console.log("✔ Evaluación de algoritmo registrada y estado actualizado.");
+  } catch (err) {
+    console.error("Error registrando evaluación del algoritmo:", err);
+    alert("Hubo un problema al guardar la evaluación.");
+  }
+
+  this.showResult = true;
+  this.showPrincipal = false;
+},
+
+    finish() {
+      if (this.isFinishEnabled) {
         this.evaluacionAlgorithmStore.evaluacion = this.evaluacion;
-
         router.push('/AbstraccionConectarCables').then(() => {
           window.scrollTo(0, 0);
         });
-        }
-      },
-
-        shuffleImages() {
-          // Fisher-Yates
-          for (let i = this.puzzle.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1))
-            ;[this.puzzle[i], this.puzzle[j]] = [this.puzzle[j], this.puzzle[i]]
-          }
-        },
-    
-        getImages(images, n) {
-          const allImages = this.getUniqueImages([...images, ...this.bad])
-          return allImages.slice(allImages.length - n)
-        },
-    
-        getUniqueImages(images) {
-          return images.filter((image, index) => {
-            return images.indexOf(images.find((i) => i.id === image.id)) === index
-          })
-        },
-    
-        validateInputs() {
-          if (this.isButtonDisabled) {
-            return; // Evita validaciones adicionales si el botón está deshabilitado
-          }
-
-          this.attemps++;
-          this.showErrorMessage = false
-          this.showResult = false
-          this.isCorrect = false
-          // Verifica si todas las entradas están llenas y son números
-          this.showErrorMessage = !this.inputs.every((input) => {
-            const inputValue = Number.parseInt(input.value, 10) // Intenta convertir el valor de entrada a un número
-            // Si el valor de entrada no es un número o está fuera de rango, no es válido
-            if (Number.isNaN(inputValue) || inputValue < 1 || inputValue > this.puzzle.length) {
-              return false
-            } else {
-              return true
-            }
-          })
-          //Verifica si las entradas son correctas
-          if (!this.showErrorMessage) {
-            this.showPrincipal = false
-            this.isCorrect = this.inputs.every((input, index) => {
-              const inputValue = Number.parseInt(input.value, 10)
-              return this.puzzle[inputValue - 1].id === this.correct[index].id
-            })
-            this.showResult = true
-            this.calcularEvaluacion();
-          } else {
-            
-            this.showErrorMessage = true
-          }
-        },
-
-        calcularEvaluacion() {
-      if (this.isCorrect === true) {
-        // Calcular evaluación solo si la respuesta es correcta
-        if (this.attemps === 1) {
-          this.evaluacion = 5;
-        } else if (this.attemps === 2) {
-          this.evaluacion = 4;
-        } else if (this.attemps === 3) {
-          this.evaluacion = 3;
-        } 
-      } else if (this.attemps === this.maxAttemps) {
-        // Asignar calificación mínima al alcanzar intentos máximos sin éxito
-        this.evaluacion = 1;
       }
-    },
     }
   }
-    </script>
+};
+</script>
+
+
+
     
     <style scoped>
     input {

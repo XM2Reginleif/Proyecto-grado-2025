@@ -7,29 +7,46 @@ import { exec } from "child_process";
 //import  fs from "fs";
 import { promises as fs } from 'fs';
 import path from 'path';
+import CourseTemplate from "../models/CourseTemplate.js"; //Importar la plantilla de los cursos
 
 
 
 export const register = async (req, res) => {
-    const {username, email, first_name, last_name, password, password_confirm} = req.body
+    const { username, email, first_name, last_name, password, password_confirm } = req.body;
 
-    if(!username || !email || !first_name || !last_name || !password || !password_confirm) return res.status(422).json({"message": "invalid fields"});
+    if (!username || !email || !first_name || !last_name || !password || !password_confirm)
+        return res.status(422).json({ message: "invalid fields" });
 
-    if(password !== password_confirm) return res.status(422).json({"message": "password no coincide"});
+    if (password !== password_confirm)
+        return res.status(422).json({ message: "password no coincide" });
 
-    const userExists = await User.exists({email}).exec()
-
-    if(userExists) return res.sendStatus(409)
+    const userExists = await User.exists({ email }).exec();
+    if (userExists) return res.sendStatus(409);
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await User.create({email, username, password: hashedPassword, first_name, last_name})
+        // Buscar la plantilla del curso
+        const plantilla = await CourseTemplate.findOne();
+        if (!plantilla) return res.status(500).json({ message: "No hay plantilla de curso disponible" });
+
+        // Clonar el curso 
+        const cursoClonado = JSON.parse(JSON.stringify(plantilla.toObject()));
+
+        // Crear el usuario con el curso asignado
+        await User.create({
+            email,
+            username,
+            password: hashedPassword,
+            first_name,
+            last_name,
+            curso: cursoClonado
+        });
 
         return res.sendStatus(201);
     } catch (error) {
         console.log(error);
-        return res.status(400).json({message: "no se pudo registrar"});
+        return res.status(400).json({ message: "no se pudo registrar" });
     }
 };
 

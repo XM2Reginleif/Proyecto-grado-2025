@@ -1,350 +1,380 @@
 <template>
-    <div id="user">
-      <div class="card card-body mt-8 align-left col-md-15">
-        <h1 class="text-center">Paso 1. Conectar cables a los motorreductores</h1>
-        <br>
-        <h3>ejercicio:</h3>
-        <br>
-        <p class="texto-personalizado">
-            Se necesita un programa en C que simule la conexión de dos cables uno rojo y otro negro a un motoreductor. 
-            Cuando se haga la conexión imrpimir el mensaje: "cable rojo y negro conectados".
-        </p>
-        <p class="texto-personalizado"> <strong>Instrucciones:</strong> Los cables deben ser variables del tipo cadena de caracter. 
-            La conexión debe ser una función del tipo cadena de caracter, la cual debe imprimir el mensaje.
-        </p>
-        <br>
-        <h3>Descomposición:</h3>
-        <br>
-        <h4 class="texto-personalizado">Seleccione el video que muestra la <strong>conexión</strong> de los cables rojo y negro al motorreductor: </h4>
-        <br>
-        <div class="video-selection">
-          <br>
-          <p class="texto-personalizado">Selecciona el video correcto:</p>
-          <br>
-          <div class="videos-container">
-            <div 
-              v-for="(video, index) in videos" 
-              :key="index" 
-              class="video-item">
-              <video width="300" height="200" controls>
-                <source :src="video.src" type="video/mp4">
-                Tu navegador no soporta la reproducción de videos.
-              </video>
-              <div class="option">
-                <input 
-                  type="radio" 
-                  :id="`video${index}`" 
-                  :value="video" 
-                  v-model="selectedVideo"
-                />
-                <label :for="`video${index}`">
-                  Seleccionar
-                </label>
-              </div>
-            </div>
+  <div id="user">
+    <div class="card card-body mt-8 align-left col-md-15">
+      <h1 class="text-center">Paso 1. Conectar cables a los motorreductores</h1>
+      <br>
+
+      <!-- Intentos de Video -->
+      <p v-if="intentosDisponiblesVideo !== null" class="alert alert-info">
+        Intentos video restantes: {{ intentosDisponiblesVideo }}
+      </p>
+
+      <!-- Video -->
+      <h3>Descomposición - Sub. Video</h3>
+      <p class="texto-personalizado">Selecciona el video que muestra la conexión de los cables:</p>
+      <div class="videos-container">
+        <div v-for="(video, index) in videos" :key="index" class="video-item">
+          <video width="300" height="200" controls>
+            <source :src="video.src" type="video/mp4">
+            Tu navegador no soporta la reproducción de videos.
+          </video>
+          <div class="option">
+            <input type="radio" :id="`video${index}`" :value="video" v-model="selectedVideo" />
+            <label :for="`video${index}`">Seleccionar</label>
           </div>
-          <br>
-          <p class="texto-personalizado">Respuesta seleccionada: {{ selectedVideo }}</p>
-          <br>
-          <button @click="checkAnswer" class="btn btn-primary">Submit</button>
-          <br>
-          <div v-if="feedbackMessage" class="respuesta">
-            <p v-if="correctVideoIndex" class="correcto alert alert-success mt-3">¡Correcto!</p>
-            <p v-else class="incorrecto alert alert-danger mt-3">{{ feedbackMessage }}</p>
-          </div>
-          <br>
-          <div v-if="evaluacionVideo !== null" class="correcto">
-            <p 
-              class="alert"
-              :class="{
-                'alert-danger': evaluacionVideo === 1,
-                'alert-success': evaluacionVideo >= 3 && evaluacionVideo <= 5
-              }">
-              Tu evaluación es: {{ evaluacionVideo }}
-            </p>
-            <br>
-          </div>
-            <p v-if="totalClicksVideo > 0" class="contador">
-              Intentos restantes: {{ maxClicksVideo - totalClicksVideo }}
-            </p>
-          </div>
-        <br>
-        <br>
-        <h4 class="texto-personalizado">Seleccione la imagen que representa la <strong>conexión de los cables al motorreductor</strong> en el simulador tinkerCAD: </h4>
-        <br>
-        <div class="figuras">
-          <div
-            v-for="(funcion, index) in funcionesV"
-            :key="funcion.alt"
-            class="figura"
-            @click="manejarClickVar(funcion.alt, index)"
-          >
+        </div>
+      </div>
+
+      <button @click="checkAnswer" class="btn btn-primary mt-2">Submit</button>
+
+      <div v-if="feedbackMessage" class="respuesta">
+        <p :class="{
+          'correcto alert alert-success mt-3': correctVideoIndex,
+          'incorrecto alert alert-danger mt-3': !correctVideoIndex
+        }">{{ feedbackMessage }}</p>
+      </div>
+
+      <div v-if="evaluacionVideo !== null" class="correcto">
+        <p class="alert" :class="{
+          'alert-danger': evaluacionVideo === 1,
+          'alert-success': evaluacionVideo >= 3 && evaluacionVideo <= 5
+        }">Tu evaluación (video): {{ evaluacionVideo }}</p>
+      </div>
+
+      <hr class="my-4" />
+
+      <!-- Intentos de Imagen -->
+      <p v-if="intentosDisponiblesImagen !== null" class="alert alert-info">
+        Intentos imagen restantes: {{ intentosDisponiblesImagen }}
+      </p>
+
+      <!-- Imagen -->
+      <h3>Descomposición - Sub. Imagen</h3>
+      <p class="texto-personalizado">Selecciona la imagen correcta de conexión de cables:</p>
+
+      <div class="figuras">
+        <div
+          v-for="(funcion, index) in funcionesV"
+          :key="funcion.alt"
+          class="figura"
+          @click="manejarClickVar(funcion.alt, index)"
+        >
           <div
             v-if="totalClicksV > 0 && mostrarContadorV === index"
             class="contador-imagen"
           >
-            {{ maxClicksV - totalClicksV }}
+            {{ intentosDisponiblesImagen - totalClicksV }}
           </div>
-            <img :src="funcion.src" :alt="funcion.alt" 
-            :style="{ 
-                pointerEvents: isBlockedV ? 'none' : 'auto', 
-                opacity: isBlockedV ? 0.5 : 1 
-            }"/>
-          </div>
+          <img :src="funcion.src" :alt="funcion.alt"
+               :style="{ pointerEvents: isBlockedV ? 'none' : 'auto', opacity: isBlockedV ? 0.5 : 1 }" />
         </div>
-        <div v-if="respuestaVar" class="respuesta">
-          <p v-if="CorrectaVar" class="correcto alert alert-success mt-3">¡Correcto!</p>
-          <p v-else class="incorrecto alert alert-danger mt-3">{{ mensajeErrorVar }}</p>
-        </div>
-        <div v-if="evaluacionV !== null" class="correcto">
-            <p 
-              class="alert"
-              :class="{
-                'alert-danger': evaluacionV === 1,
-                'alert-success': evaluacionV >= 3 && evaluacionV <= 5
-              }">
-              Tu evaluación es: {{ evaluacionV }}
-            </p>
-            <br>
-          </div>
-        <br>
-        <div>
-          <br>
-        </div>
-        <br>
-        <div v-if="puedeAvanzar" class="evaluacion-final">
-          <p class="alert alert-primary">
-            Evaluación total: {{ evaluacionTotal.toFixed(1) }}
-          </p>
-        </div>
-        <br>
-        <p class="alert alert-primary">
-          Evaluación Descomposición: {{ evaluacionStore.evaluacion.toFixed(1) }}
-        </p>
-        <br>
-        <button class="bt-validate" 
-          @click="finish"
-          :disabled="!puedeAvanzar">
-          Avanzar
-        </button>
       </div>
-      <div class="align-left col-md-3">
-        <div class="temas">
-          <MenuCarro />
-        </div>
+
+      <!-- Resultado parcial imagen -->
+      <div v-if="respuestaVar" class="respuesta">
+        <p v-if="CorrectaVar" class="correcto alert alert-success mt-3">¡Correcto!</p>
+        <p v-else class="incorrecto alert alert-danger mt-3">{{ mensajeErrorVar }}</p>
+      </div>
+
+      <!-- Nota imagen -->
+      <div v-if="evaluacionV !== null" class="correcto">
+        <p class="alert" :class="{
+          'alert-danger': evaluacionV === 1,
+          'alert-success': evaluacionV >= 3 && evaluacionV <= 5
+        }">Tu evaluación (imagen): {{ evaluacionV }}</p>
+      </div>
+
+      <!-- Retroalimentación opcional -->
+      <div v-if="isBlockedV" class="alert alert-info mt-3">
+        Evaluación del subejercicio de imagen registrada.
+      </div>
+
+      <hr class="my-4" />
+
+      <!-- Evaluación combinada -->
+      <div v-if="puedeAvanzar" class="evaluacion-final">
+        <p class="alert alert-primary">
+          Evaluación total: {{ evaluacionTotal.toFixed(1) }}
+        </p>
+      </div>
+
+      <p class="alert alert-primary">
+        Evaluación Descomposición: {{ evaluacionStore.evaluacion.toFixed(1) }}
+      </p>
+
+      <!-- Botón avanzar solo si ambas evaluaciones están completas -->
+      <button
+        class="bt-validate"
+        @click="finish"
+        :disabled="evaluacionV === null || evaluacionVideo === null"
+      >
+        Avanzar
+      </button>
+    </div>
+
+    <!-- Menú lateral -->
+    <div class="align-left col-md-3">
+      <div class="temas">
+        <MenuCarro />
       </div>
     </div>
-  </template>
-  
-  <script>
-  import router from '@/router';
-  import MenuCarro from "../../components/MenuCarro.vue";
-  import Funcion5 from '@/assets/FuncionesSinparImages/Funciones 5.png';
-  import Funcion6 from '@/assets/FuncionesSinparImages/Funciones 6.png';
-  import Funcion7 from '@/assets/FuncionesSinparImages/Funciones 7.png';
-  import Funcion8 from '@/assets/FuncionesSinparImages/Funciones 8.png';
-  import Video1 from '@/assets/VideosConectarCables/Video 1.mp4';
-  import Video2 from '@/assets/VideosConectarCables/Video 2.mp4';
-  import Video3 from '@/assets/VideosConectarCables/Video 3.mp4';
-  import { useEvaluacionStore } from '@/stores/evaluation';
+  </div>
+</template>
 
-  
+
+
+
+<script>
+  import router from '@/router';
+import MenuCarro from "../../components/MenuCarro.vue";
+import Funcion5 from '@/assets/FuncionesSinparImages/Funciones 5.png';
+import Funcion6 from '@/assets/FuncionesSinparImages/Funciones 6.png';
+import Funcion7 from '@/assets/FuncionesSinparImages/Funciones 7.png';
+import Funcion8 from '@/assets/FuncionesSinparImages/Funciones 8.png';
+import Video1 from '@/assets/VideosConectarCables/Video 1.mp4';
+import Video2 from '@/assets/VideosConectarCables/Video 2.mp4';
+import Video3 from '@/assets/VideosConectarCables/Video 3.mp4';
+import { onMounted, reactive, toRefs } from 'vue';
+import { useEvaluacionStore } from '@/stores/evaluation';
+import { useEvaluacionSubejercicio } from '@/composables/useEvaluacionSubejercicio';
+
   export default {
     name: 'App',
-  
     components: {
       MenuCarro,
     },
 
-    setup() {
-      const evaluacionStore = useEvaluacionStore();
-      return {
-        evaluacionStore, // devuelve todo el store, no solo el valor
-      };
-    },
-  
+    
+setup() {
+  const evaluacionStore = useEvaluacionStore();
+
+  // Sub. Imagen - Descomposición
+  const evaluacionImagenRaw = reactive(useEvaluacionSubejercicio({
+    modulo: '1. Fase de ensamblaje',
+    submodulo: '1.1 Conectar cables a los motorreductores',
+    ejercicio: 'Ejercicio 1',
+    categoria: 'descomposicion',
+    subejercicio: 'Subejercicio 1'
+  }));
+
+  // Sub. Video - Descomposición
+  const evaluacionVideoRaw = reactive(useEvaluacionSubejercicio({
+    modulo: '1. Fase de ensamblaje',
+    submodulo: '1.1 Conectar cables a los motorreductores',
+    ejercicio: 'Ejercicio 1',
+    categoria: 'descomposicion',
+    subejercicio: 'Subejercicio 2'
+  }));
+
+  // Exponer refs y funciones
+  const evaluacionImagen = {
+    ...toRefs(evaluacionImagenRaw),
+    registrarEvaluacion: evaluacionImagenRaw.registrarEvaluacion,
+    obtenerIntentos: evaluacionImagenRaw.obtenerIntentos
+  };
+
+  const evaluacionVideo = {
+    ...toRefs(evaluacionVideoRaw),
+    registrarEvaluacion: evaluacionVideoRaw.registrarEvaluacion,
+    obtenerIntentos: evaluacionVideoRaw.obtenerIntentos
+  };
+
+  // Ejecutar obtención de estado al montar
+  onMounted(() => {
+    console.log('Mounted ejecutado');
+    evaluacionImagen.obtenerIntentos();
+    evaluacionVideo.obtenerIntentos();
+  });
+
+  return {
+    evaluacionStore,
+
+    // Imagen
+    intentosDisponiblesImagen: evaluacionImagen.intentosRestantes,
+    obtenerIntentosImagen: evaluacionImagen.obtenerIntentos,
+    registrarEvaluacionImagen: evaluacionImagen.registrarEvaluacion,
+
+    // Video
+    intentosDisponiblesVideo: evaluacionVideo.intentosRestantes,
+    obtenerIntentosVideo: evaluacionVideo.obtenerIntentos,
+    registrarEvaluacionVideo: evaluacionVideo.registrarEvaluacion,
+  };
+},
     data() {
       return {
-
         funcionesV: [
           { src: Funcion5, alt: 'Funcion 5' },
           { src: Funcion6, alt: 'Funcion 6' },
           { src: Funcion7, alt: 'Funcion 7' },
           { src: Funcion8, alt: 'Funcion 8' },
         ].sort(() => Math.random() - 0.5),
-  
-        
+
+        respuestaCorrectaV: 'Funcion 5',
+        totalClicksV: 0,
+        mostrarContadorV: null,
+        isBlockedV: false,
         respuestaVar: null,
         CorrectaVar: false,
+        evaluacionV: null,
         mensajeErrorVar: '',
         mensajesErrorVar: [
           '¡Error! Recuerda que debes de seleccionar la imagen que tenga la declaración de la función (laboratorio) de forma correcta',
-          '¡Error! La forma en la que estas haciendo la declaración de la función (laboratorio) no es correcta',
-          '¡Error! Intenta ir a revisar la teoria sobre la declaración de una función e intentalo de nuevo',
-          '¡Error! Ten en cuenta que la declaración de la función (laboratorio) para este caso es una función (sin parámetros)',
+          '¡Error! La forma en la que estás haciendo la declaración de la función (laboratorio) no es correcta',
+          '¡Error! Intenta ir a revisar la teoría sobre la declaración de una función e inténtalo de nuevo',
+          '¡Error! Ten en cuenta que la declaración de la función (laboratorio) para este caso es una función (sin parámetros)'
         ],
-  
-        respuestaCorrectaV: 'Funcion 5',
-        totalClicksV: 0,
-        maxClicksV: 3,
-        mostrarContadorV: null,
-        isBlockedV: false,
-        evaluacionV: null,
-        evaluacionLlamada: null,
-        evaluacionEstructura: null,
 
         videos: [
-        { src: Video1, alt: 'Video 1' },
-        { src: Video2, alt: 'Video 2' },
-        { src: Video3, alt: 'Video 3' },
-      ].sort(() => Math.random() - 0.5),
+          { src: Video1, alt: 'Video 1' },
+          { src: Video2, alt: 'Video 2' },
+          { src: Video3, alt: 'Video 3' },
+        ].sort(() => Math.random() - 0.5),
 
-      correctVideoIndex: null, // Índice del video correcto
-      selectedVideo: null,
-      feedbackMessage: "",
-      feedbackClass: "",
-      BlockedVideo: null,
-      totalClicksVideo: 0, 
-      maxClicksVideo: 3,
-      mostrarContadorVideo: null,
-      evaluacionVideo: null,
-
-      mensajesErrorVideo: [
-          '¡Error! Recuerda que debes de seleccionar la imagen que tenga la declaración de la función (laboratorio) de forma correcta',
-          '¡Error! La forma en la que estas haciendo la declaración de la función (laboratorio) no es correcta',
-          '¡Error! Intenta ir a revisar la teoria sobre la declaración de una función e intentalo de nuevo',
-          '¡Error! Ten en cuenta que la declaración de la función (laboratorio) para este caso es una función (sin parámetros)',
-        ],
-
-    };
-      
+        selectedVideo: null,
+        feedbackMessage: "",
+        feedbackClass: "",
+        BlockedVideo: null,
+        totalClicksVideo: 0,
+        evaluacionVideo: null,
+        correctVideoIndex: null,
+        mostrarContadorVideo: null,
+        mensajesErrorVideo: [
+          '¡Error! Recuerda que debes de seleccionar el video correcto.',
+          '¡Error! Esa no es la conexión adecuada.',
+          '¡Error! Intenta revisar el video nuevamente.',
+          '¡Error! Esa conexión no es válida en este caso.'
+        ]
+      };
     },
-  
-      computed: {
-      // Propiedad computada para habilitar o deshabilitar el botón
+
+    computed: {
       puedeAvanzar() {
-        return (
-          this.evaluacionV !== null &&
-          this.evaluacionVideo !== null
-        );
+        return this.evaluacionV !== null && this.evaluacionVideo !== null;
       },
-  
       evaluacionTotal() {
-        const total =
-          (this.evaluacionV ?? 0) +
-          (this.evaluacionVideo ?? 0)
-        return total / 2; // Dividimos entre el total de actividades
-      },
-      
+        const total = (this.evaluacionV ?? 0) + (this.evaluacionVideo ?? 0);
+        return total / 2;
+      }
     },
-  
+
     methods: {
-  
-      manejarClickVar(funcionesV, index) {
-        if (this.isBlockedV || this.totalClicksV >= this.maxClicksV) {
-          return; // Bloquea clics adicionales si se alcanzó el límite o la respuesta es correcta
-        }
-  
-        const funcionSeleccionada = this.funcionesV[index].alt;
-        
-        if (funcionSeleccionada === this.respuestaCorrectaV) {
-          this.isBlockedV = true; // Bloquea clics adicionales
-          this.calcularEvaluacionVar();
-          this.mostrarContadorV = index; // Muestra el contador en la imagen seleccionada
-          this.respuestaVar = funcionesV;
-          this.CorrectaVar = true;
-          return; // Termina aquí para evitar incrementar el contador
-        }
-  
-        this.totalClicksV++; // Incrementa el contador global
-        this.mostrarContadorV = index; // Muestra el contador en la imagen seleccionada
-        this.respuestaVar = funcionesV;
-        this.CorrectaVar = funcionesV === 'Funcion 5';
-  
-        if (this.totalClicksV >= this.maxClicksV) {
-          this.isBlockedV = true; 
-          this.evaluacionV = 1; // Asegura que se evalúe como 1
-          return;
-        }
-  
-        if (!this.CorrectaVar) {
-          this.mensajeErrorVar = this.obtenerMensajeErrorVar();
-        }
-      },
-  
-      calcularEvaluacionVar() {
-        if (this.totalClicksV === 0) {
-          this.evaluacionV = 5;
-        } else if (this.totalClicksV === 1) {
-          this.evaluacionV = 4;
-        } else if (this.totalClicksV === 2) {
-          this.evaluacionV = 3;
-        } 
-      },
-  
-      obtenerMensajeErrorVar() {
-        const randomIndex = Math.floor(Math.random() * this.mensajesErrorVar.length);
-        return this.mensajesErrorVar[randomIndex];
-      },
-  
-      finish() {
+  // --- Subejercicio de Imagen ---
+  async manejarClickVar(funcionSeleccionada, index) {
+  if (this.intentosDisponiblesImagen <= 0) return;
 
-        this.evaluacionStore.evaluacion = this.evaluacionTotal;
+  this.mostrarContadorV = index;
+  this.respuestaVar = funcionSeleccionada;
 
-        router.push('/AlgoritmoConectarCables').then(() => {
-          window.scrollTo(0, 0);
-        });
-      },
+  if (funcionSeleccionada === this.respuestaCorrectaV) {
+    this.CorrectaVar = true;
+  } else {
+    this.totalClicksV++;
+    this.CorrectaVar = false;
+    this.mensajeErrorVar = this.obtenerMensajeErrorVar();
+  }
 
-      checkAnswer() {
-        if (this.BlockedVideo || this.totalClicksVideo >= this.maxClicksVideo) {
-          return;
-        }
+  this.calcularEvaluacionVar();
 
-        if (!this.selectedVideo) {
-          this.feedbackMessage = "Debes seleccionar un video antes de enviar la respuesta.";
-          this.feedbackClass = "error-message";
-          return;
-        }
+  try {
+    await this.registrarEvaluacionImagen(this.evaluacionV);
+    await this.obtenerIntentosImagen();
 
-        if (this.selectedVideo.src === Video1) {
-          this.BlockedVideo = true;
-          this.calcularEvaluacionVideo();
-          this.feedbackMessage = "¡Correcto! Seleccionaste el video adecuado.";
-          this.feedbackClass = "success-message";
-          this.correctVideoIndex = true;
-        } else {
-          this.totalClicksVideo++;
-          this.feedbackMessage = this.obtenerMensajeErrorVideo();
-          this.feedbackClass = "error-message";
-
-          if (this.totalClicksVideo >= this.maxClicksVideo) {
-            this.BlockedVideo = true;
-            this.evaluacionVideo = 1; // Puntuación mínima
-          }
-        }
-      },
-
-      obtenerMensajeErrorVideo() {
-        const randomIndex = Math.floor(Math.random() * this.mensajesErrorVideo.length);
-        return this.mensajesErrorVideo[randomIndex];
-      },
-
-
-      calcularEvaluacionVideo() {
-        if (this.totalClicksVideo === 0) {
-          this.evaluacionVideo = 5;
-        } else if (this.totalClicksVideo === 1) {
-          this.evaluacionVideo = 4;
-        } else if (this.totalClicksVideo === 2) {
-          this.evaluacionVideo = 3;
-        } 
-      },
-
-
+    // Solo bloquear si ya no quedan intentos
+    if (this.intentosDisponiblesImagen <= 0) {
+      this.isBlockedV = true;
     }
+
+    console.log("Imagen evaluada y estado actualizado");
+  } catch (err) {
+    console.error("Error registrando evaluación imagen:", err);
+    alert("Hubo un problema al guardar la evaluación de imagen.");
+  }
+}
+,
+
+  calcularEvaluacionVar() {
+    const intentos = this.totalClicksV;
+    this.evaluacionV = intentos === 0 ? 5 : intentos === 1 ? 4 : 3;
+  },
+
+  obtenerMensajeErrorVar() {
+    const i = Math.floor(Math.random() * this.mensajesErrorVar.length);
+    return this.mensajesErrorVar[i];
+  },
+
+  // --- Subejercicio de Video ---
+  async checkAnswer() {
+  if (this.intentosDisponiblesVideo <= 0) return;
+
+  if (!this.selectedVideo) {
+    this.feedbackMessage = "Debes seleccionar un video antes de enviar la respuesta.";
+    this.feedbackClass = "error-message";
+    return;
+  }
+
+  if (this.selectedVideo.src === Video1) {
+    this.correctVideoIndex = true;
+    this.feedbackMessage = "¡Correcto! Seleccionaste el video adecuado.";
+    this.feedbackClass = "success-message";
+    this.calcularEvaluacionVideo();
+  } else {
+    this.totalClicksVideo++;
+    this.correctVideoIndex = false;
+    this.feedbackMessage = this.obtenerMensajeErrorVideo();
+    this.feedbackClass = "error-message";
+
+    if (this.totalClicksVideo >= this.intentosDisponiblesVideo) {
+      this.evaluacionVideo = 1;
+    } else {
+      this.calcularEvaluacionVideo();
+    }
+  }
+
+  try {
+    await this.registrarEvaluacionVideo(this.evaluacionVideo);
+    await this.obtenerIntentosVideo();
+
+    // Solo bloquear si ya no quedan intentos
+    if (this.intentosDisponiblesVideo <= 0) {
+      this.BlockedVideo = true;
+    }
+
+    console.log("✔ Video evaluado y estado actualizado");
+  } catch (err) {
+    console.error("Error registrando evaluación video:", err);
+    alert("Hubo un problema al guardar la evaluación del video.");
+  }
+},
+
+  calcularEvaluacionVideo() {
+    const intentos = this.totalClicksVideo;
+    this.evaluacionVideo = intentos === 0 ? 5 : intentos === 1 ? 4 : 3;
+  },
+
+  obtenerMensajeErrorVideo() {
+    const i = Math.floor(Math.random() * this.mensajesErrorVideo.length);
+    return this.mensajesErrorVideo[i];
+  },
+
+  // --- Finalizar ---
+  async finish() {
+    if (this.evaluacionV === null || this.evaluacionVideo === null) {
+      alert("Debes completar ambas evaluaciones antes de avanzar.");
+      return;
+    }
+
+    const notaFinal = (this.evaluacionV + this.evaluacionVideo) / 2;
+    this.evaluacionStore.evaluacion = notaFinal;
+
+    this.$router.push('/AlgoritmoConectarCables').then(() => {
+      window.scrollTo(0, 0);
+    });
+  }
+  }
   };
-  </script>
+</script>
+
+
   
   <style scoped>
   #app {

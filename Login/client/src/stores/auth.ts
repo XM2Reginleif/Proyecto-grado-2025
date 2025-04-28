@@ -60,21 +60,25 @@ export const useAuthStore = defineStore("auth", {
             return
           },
 
-        async login(payload: LoginData){
+          async login(payload: LoginData) {
             try {
-                const {data} = await useApi().post("/api/auth/login", payload);
-                this.accessToken = data?.access_token
-                await this.getUser()
-                return data;
+              const { data } = await useApi().post("/api/auth/login", payload);
+              this.accessToken = data?.access_token;
+          
+              // Guardamos el token en localStorage para acceder desde cualquier lugar
+              localStorage.setItem("token", this.accessToken);
+          
+              await this.getUser();
+              return data;
             } catch (error: Error | any) {
-                // Manejar el error del backend o un error genérico
-                if (error.response && error.response.data && error.response.data.message) {
-                  throw new Error(error.response.data.message); // Mensaje desde el backend
-                } else {
-                  throw new Error("Error inesperado. Por favor, intente más tarde."); // Mensaje genérico
-                }
+              if (error.response?.data?.message) {
+                throw new Error(error.response.data.message);
+              } else {
+                throw new Error("Error inesperado. Por favor, intente más tarde.");
+              }
             }
-        },
+          }
+          ,
 
         async register(payload: RegisterData){
             try {

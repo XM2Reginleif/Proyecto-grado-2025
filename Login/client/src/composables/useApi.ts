@@ -4,9 +4,14 @@ import { watchEffect } from "vue";
 import type { AxiosInstance } from "axios";
 
 export function useApiPrivate(): AxiosInstance{
-
+      
     const authStore = useAuthStore()
-
+    if (!authStore.accessToken) {
+        const storedToken = localStorage.getItem("token");
+        if (storedToken) {
+          authStore.accessToken = storedToken;
+        }
+      }
     watchEffect(() => {
         axiosPrivateInstance.interceptors.request.use(
             (config) => {
@@ -26,7 +31,7 @@ export function useApiPrivate(): AxiosInstance{
                 if((error?.response?.status === 403 || error?.response?.status === 401) && !prevRequest.sent){
                     prevRequest.sent = true
                     await authStore.refresh()
-                    prevRequest.headers["Authhorization"] = authStore.accessToken
+                    prevRequest.headers["Authorization"] = `Bearer ${authStore.accessToken}`;
                     return axiosPrivateInstance(prevRequest);
                 }
     

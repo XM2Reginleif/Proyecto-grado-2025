@@ -211,11 +211,15 @@ export default {
     },
 
     calcularEvaluacion() {
-      const intentosUsados = 3 - this.intentosDisponiblesGeneralization;
+      const intentosAntesDeRegistrar = this.intentosDisponiblesGeneralization;
+
       if (this.isCorrect) {
-        this.evaluacion = intentosUsados === 1 ? 5 : intentosUsados === 2 ? 4 : 3;
-      } else if (this.intentosDisponiblesGeneralization <= 0) {
-        this.evaluacion = 1;
+        this.evaluacion = intentosAntesDeRegistrar === 3 ? 5 :
+                          intentosAntesDeRegistrar === 2 ? 4 : 3;
+      } else if (intentosAntesDeRegistrar <= 1) {
+        this.evaluacion = 1; // Último intento y falló
+      } else {
+        this.evaluacion = 1; // Cualquier intento fallido igual debe registrar
       }
     },
 
